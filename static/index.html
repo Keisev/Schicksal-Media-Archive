@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Schicksal Media Archive</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="layout">
+    <section class="left">
+      <header class="hero">
+        <h1>Schicksal Media Archive</h1>
+        <p>
+          Archivador de PVs de Gachas enfocado en la subtitulación.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Video principal</h2>
+
+        <label for="videoUrl">
+          URL del video de YouTube para la imagen
+        </label>
+
+        <div class="row">
+          <input id="videoUrl" placeholder="https://youtu.be/..." />
+          <button id="fetchMainInfo">Obtener Info</button>
+        </div>
+
+        <label for="videoQualitySelect">Calidad de video</label>
+        <select id="videoQualitySelect" disabled></select>
+
+        <div id="videoTitle" class="hint"></div>
+      </section>
+
+      <section class="card">
+        <h2>Fuente de audio</h2>
+
+        <div class="toggle-group">
+          <button id="audioOriginalBtn" class="toggle active">
+            Usar audio del video original
+          </button>
+
+          <button id="audioExternalBtn" class="toggle">
+            Usar audio de otro video
+          </button>
+        </div>
+
+        <div id="audioOriginalPanel" class="panel">
+          <label for="originalAudioSelect">Pista de audio</label>
+          <select id="originalAudioSelect" disabled></select>
+        </div>
+
+        <div id="audioExternalPanel" class="panel hidden">
+          <label for="audioUrl">URL del video para el audio</label>
+
+          <div class="row">
+            <input id="audioUrl" placeholder="https://youtu.be/..." />
+            <button id="fetchAudioInfo">Info</button>
+          </div>
+
+          <label for="externalAudioSelect">Pista de audio externa</label>
+          <select id="externalAudioSelect" disabled></select>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Subtítulos</h2>
+
+        <div class="toggle-group four">
+          <button class="toggle sub active" data-sub="none">
+            Sin subtítulos
+          </button>
+
+          <button class="toggle sub" data-sub="internal">
+            Internos
+          </button>
+
+          <button class="toggle sub" data-sub="external">
+            Externos
+          </button>
+
+          <button class="toggle sub" data-sub="automatic">
+            Automáticos
+          </button>
+        </div>
+
+        <div id="subtitleOptions" class="panel hidden">
+          <div class="checks">
+            <label>
+              <input type="checkbox" id="burnSubs" checked />
+              Quemar subtítulos
+            </label>
+
+            <label>
+              <input type="checkbox" id="embedSubs" />
+              Insertar subtítulos
+            </label>
+
+            <label>
+              <input type="checkbox" id="keepSrt" />
+              Conservar .srt
+            </label>
+          </div>
+
+          <div id="internalAutomaticPanel" class="hidden">
+            <label for="subtitleLangSelect">Idioma</label>
+            <select id="subtitleLangSelect" disabled></select>
+          </div>
+
+          <div id="externalPanel" class="hidden">
+            <div class="small-toggle-row">
+              <button id="externalSubUrlTab" class="small-toggle active">
+                Desde URL
+              </button>
+
+              <button id="externalSubFileTab" class="small-toggle">
+                Desde archivo
+              </button>
+            </div>
+
+            <div id="externalSubUrlPanel" class="panel">
+              <label for="subtitleUrl">URL para subtítulos</label>
+
+              <div class="row">
+                <input id="subtitleUrl" placeholder="https://youtu.be/..." />
+                <button id="fetchSubInfo">Info</button>
+              </div>
+
+              <label for="externalSubLangSelect">Idioma</label>
+              <select id="externalSubLangSelect" disabled></select>
+            </div>
+
+            <div id="externalSubFilePanel" class="panel hidden">
+              <label for="srtFile">Archivo .srt</label>
+              <input type="file" id="srtFile" accept=".srt" />
+              <div id="srtFileName" class="hint"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Directorio de salida</h2>
+
+        <div class="row">
+          <input id="outputDir" placeholder="/home/alan/Videos/YT-DLP" />
+          <button id="browseDir">Cambiar</button>
+        </div>
+      </section>
+      
+      <section class="card">
+        <h2>Cookies</h2>
+
+        <label for="cookiesMode">Modo</label>
+        <select id="cookiesMode">
+          <option value="none">Sin cookies</option>
+          <option value="browser">Usar cookies de mi navegador</option>
+          <option value="file">Usar archivo cookies.txt</option>
+        </select>
+
+        <div id="cookiesBrowserPanel" class="panel hidden">
+          <label for="cookiesBrowser">Navegador</label>
+          <select id="cookiesBrowser">
+            <option value="firefox">firefox</option>
+            <option value="chrome">chrome</option>
+            <option value="chromium">chromium</option>
+            <option value="brave">brave</option>
+            <option value="edge">edge</option>
+            <option value="vivaldi">vivaldi</option>
+            <option value="opera">opera</option>
+          </select>
+
+          <label for="cookiesProfile">Perfil (opcional, ej: Default)</label>
+          <input id="cookiesProfile" placeholder="Vacío = perfil por defecto" />
+
+          <p class="hint">
+            Recomendado en Linux: firefox. Debes tener sesión iniciada en
+            YouTube en ese navegador.
+          </p>
+        </div>
+
+        <div id="cookiesFilePanel" class="panel hidden">
+          <label for="cookiesFile">Archivo cookies.txt</label>
+          <input type="file" id="cookiesFile" accept=".txt" />
+          <div id="cookiesFileStatus" class="hint"></div>
+
+          <p class="hint">
+            Expórtalo con una extensión tipo “Get cookies.txt LOCALLY” o
+            “cookies.txt” estando logueado en youtube.com. También puedes
+            colocar el archivo manualmente en la carpeta del proyecto como
+            <span class="mono">cookies.txt</span>.
+          </p>
+        </div>
+      </section>
+
+      <button id="downloadBtn" class="primary big">
+        Iniciar Descarga
+      </button>
+
+      <!-- Barra de progreso en tiempo real (WebSocket) -->
+      <div id="progressWrap" class="progress-wrap hidden">
+        <progress id="downloadProgress" max="100" value="0"></progress>
+        <div id="progressText" class="progress-text">0%</div>
+      </div>
+    </section>
+
+    <section class="right card log-card">
+      <div class="log-header">
+        <h2>Registro de actividad</h2>
+        <button id="stopBtn" class="danger" disabled>Parar</button>
+      </div>
+
+      <div id="log" class="log"></div>
+    </section>
+  </main>
+
+  <div id="dirModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Seleccionar carpeta</h3>
+        <button id="closeDirModal">Cerrar</button>
+      </div>
+
+      <div id="currentDir" class="hint mono"></div>
+
+      <div class="row">
+        <button id="dirParent">Subir</button>
+        <button id="dirHome">Home</button>
+      </div>
+
+      <ul id="dirList" class="dir-list"></ul>
+
+      <button id="selectDirBtn" class="primary">
+        Usar esta carpeta
+      </button>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
+

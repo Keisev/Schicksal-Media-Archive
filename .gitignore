@@ -1,0 +1,13 @@
+# Archivos sensibles
+cookies.txt
+ytdlp_webgui.log
+ytdlp_webgui_config.json
+
+# Carpetas
+uploads/
+temp/
+__pycache__/
+
+# Python
+*.pyc
+.venv/
