@@ -72,23 +72,38 @@ else
 fi
 
 if [ ! -x build_bin/ffmpeg ] || [ ! -x build_bin/ffprobe ]; then
-    echo "  Descargando ffmpeg estático (amd64)..."
-    curl -L --fail --retry 3 -o build_bin/ffmpeg-release-amd64-static.tar.xz \
-        https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+echo "  Descargando ffmpeg estático (amd64) desde BtbN..."
+FFMPEG_TAR="build_bin/ffmpeg-linux64.tar.xz"
+FFMPEG_DIR_NAME="ffmpeg-master-latest-linux64-gpl"
 
-    echo "  Extrayendo ffmpeg y ffprobe del tar.xz..."
-    tar -xf build_bin/ffmpeg-release-amd64-static.tar.xz -C build_bin/
+curl -L --fail --retry 3 -o "$FFMPEG_TAR" \
+https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/$FFMPEG_DIR_NAME.tar.xz
 
-    # El tar contiene una carpeta ffmpeg-*-amd64-static/ con los binarios dentro
-    FFMPEG_DIR=$(find build_bin/ -maxdepth 1 -type d -name 'ffmpeg-*-amd64-static' | head -n 1)
-    if [ -z "$FFMPEG_DIR" ]; then
-        echo "  ERROR: No se encontró la carpeta extraída de ffmpeg." >&2
-        exit 1
-    fi
-    mv -f "$FFMPEG_DIR/ffmpeg"  build_bin/ffmpeg
-    mv -f "$FFMPEG_DIR/ffprobe" build_bin/ffprobe
-    rm -rf "$FFMPEG_DIR"
-    rm -f build_bin/ffmpeg-release-amd64-static.tar.xz
+echo "  Extrayendo ffmpeg y ffprobe del tar.xz..."
+tar -xf "$FFMPEG_TAR" -C build_bin/
+
+# En BtbN, la carpeta se llama ffmpeg-master-latest-linux64-gpl y los binarios están en bin/
+EXTRACTED_DIR="build_bin/$FFMPEG_DIR_NAME"
+if [ ! -d "$EXTRACTED_DIR" ]; then
+    # Fallback por si el nombre de la carpeta cambió ligeramente en el futuro
+    EXTRACTED_DIR=$(find build_bin/ -maxdepth 1 -type d -name 'ffmpeg-master-latest*' | head -n 1)
+fi
+
+if [ -z "$EXTRACTED_DIR" ] || [ ! -d "$EXTRACTED_DIR" ]; then
+    echo "  ERROR: No se encontró la carpeta extraída de ffmpeg en build_bin/." >&2
+    ls -la build_bin/
+    exit 1
+fi
+
+if [ ! -f "$EXTRACTED_DIR/bin/ffmpeg" ]; then
+    echo "  ERROR: No se encontró ffmpeg en $EXTRACTED_DIR/bin/." >&2
+    exit 1
+fi
+
+mv -f "$EXTRACTED_DIR/bin/ffmpeg"  build_bin/ffmpeg
+mv -f "$EXTRACTED_DIR/bin/ffprobe" build_bin/ffprobe
+rm -rf "$EXTRACTED_DIR"
+rm -f "$FFMPEG_TAR"
 else
     echo "  ffmpeg/ffprobe ya existen, se reutilizan."
 fi
