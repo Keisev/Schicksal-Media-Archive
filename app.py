@@ -16,6 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from utils import get_binary_path
+
 
 # ============================================================
 # Rutas y configuración básica
@@ -257,10 +259,10 @@ def get_dependency_status(force: bool = False) -> Dict[str, Any]:
 
     missing = []
 
-    if not check_dependency(["yt-dlp", "--version"]):
+    if not check_dependency([get_binary_path("yt-dlp"), "--version"]):
         missing.append("yt-dlp")
 
-    if not check_dependency(["ffmpeg", "-version"]):
+    if not check_dependency([get_binary_path("ffmpeg"), "-version"]):
         missing.append("ffmpeg")
 
     _DEPENDENCY_CACHE = {
@@ -467,7 +469,7 @@ def run_command(command: List[Any]) -> None:
 
 def get_ytdlp_info(url: str, timeout: int = 120) -> Dict[str, Any]:
     command = [
-        "yt-dlp",
+        get_binary_path("yt-dlp"),
         "--dump-json",
         "--no-playlist",
     ] + get_cookies_args() + [
@@ -692,7 +694,7 @@ def download_subtitle_files(
     langs_str = ",".join(langs)
 
     command = [
-        "yt-dlp",
+        get_binary_path("yt-dlp"),
         "--newline",
         "--skip-download",
         "--convert-subs",
@@ -773,7 +775,7 @@ def download_ytdlp_file(
     stage: Optional[str] = None,
 ) -> Path:
     command = [
-        "yt-dlp",
+        get_binary_path("yt-dlp"),
         "--newline",
         "--no-playlist",
     ] + get_cookies_args() + [
@@ -856,7 +858,7 @@ def combine_files(
     final_video_name: Path,
 ) -> None:
     command = [
-        "ffmpeg",
+        get_binary_path("ffmpeg"),
         "-y",
         "-i",
         str(video_path),
