@@ -17,9 +17,10 @@ import sys
 from pathlib import Path
 
 # Nombre del directorio dentro del bundle donde se incluyen los binarios.
-# (Al construir con PyInstaller se usa, por ejemplo:
-#   pyinstaller --add-binary "yt-dlp:bin" --add-binary "ffmpeg:bin" main.py)
 BIN_DIR_NAME = "bin"
+
+# Directorio del script en modo desarrollo (este archivo utils.py).
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def is_frozen() -> bool:
@@ -37,10 +38,28 @@ def get_base_path() -> str:
 
 
 def _binary_filename(name: str) -> str:
-    """Añade la extensión ``.exe`` en Windows si procede."""
-    if os.name == "nt" and not name.lower().endswith(".exe"):
-        return f"{name}.exe"
-    return name
+    """Devuelve los nombres de archivo candidatos para el binario ``name``.
+
+    En Windows se incluyen tanto la variante ``.exe`` como la variante sin
+    extensión (p. ej. el *zipimport* oficial de yt-dlp se llama ``yt-dlp.exe``
+    pero algunos builds usan ``yt-dlp``). En otros sistemas se devuelve solo el
+    nombre tal cual. Se ordenan por prioridad de búsqueda.
+    """
+    if os.name == "nt":
+        base = name[:-4] if name.lower().endswith(".exe") else name
+        return [f"{base}.exe", base]
+    return [name]
+
+
+def resource_path(relative_path: str) -> str:
+    """Ruta absoluta a un recurso estatico (ej. ``static/index.html``).
+
+    Con PyInstaller (``sys._MEIPASS``) los recursos viven dentro del bundle
+    temporal; en desarrollo relativo al directorio del proyecto.
+    """
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(str(sys._MEIPASS), relative_path)
+    return os.path.join(_SCRIPT_DIR, relative_path)
 
 
 def get_binary_path(name: str) -> str:
@@ -55,20 +74,27 @@ def get_binary_path(name: str) -> str:
     3. Como último recurso, se devuelve simplemente ``name`` para que el
        sistema lo resuelva a través del PATH.
     """
-    filename = _binary_filename(name)
+    filenames = _binary_filename(name)
     base_path = Path(get_base_path())
 
-    candidates = [
-        base_path / BIN_DIR_NAME / filename,  # bundled/relocal: bin/yt-dlp
-        base_path / filename,                # raíz del bundle / del script
-    ]
+    candidates = []
+    for fname in filenames:
+        candidates.append(base_path / BIN_DIR_NAME / fname)  # bin/yt-dlp[.exe]
+        candidates.append(base_path / fname)                 # raíz del bundle
 
     for candidate in candidates:
         if candidate.is_file():
             return str(candidate)
 
-    # No está incluido en el bundle: devolver solo el nombre para que se
-    # resuelva vía PATH (comportamiento habitual en desarrollo).
+    # No está incluido en el bundle (o no existe): devolver solo el nombre
+    # para que subprocess lo resuelva vía PATH. En modo empaquetado se avisa
+    # por stderr porque normalmente indicaría un --add-binary ausente.
+    if is_frozen():
+        print(
+            f"[utils] AVISO: binario '{filenames[0]}' no encontrado en el bundle "
+            f"({base_path}); intentando resolverlo por PATH.",
+            file=sys.stderr,
+        )
     return name
 
 

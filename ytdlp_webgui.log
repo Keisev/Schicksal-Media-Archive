@@ -1,0 +1,5 @@
+2026-10-16 17:35:45,631 - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-10-16 17:35:45,634 - INFO - HTTP Request: GET http://testserver/api/dependencies "HTTP/1.1 404 Not Found"
+2026-10-16 17:36:08,722 - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-10-16 17:36:18,056 - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-10-16 17:36:34,129 - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"

@@ -13,9 +13,18 @@ Diseñado para empaquetarse con PyInstaller, por ejemplo:
 
 from __future__ import annotations
 
+import os
 import sys
 import threading
 import time
+
+# --- Parche de compatibilidad para PyInstaller --onefile ---------------------
+# En modo "one file" los .dll del bundle (p. ej. WebView2Loader.dll usado por
+# pywebview) se extraen en ``sys._MEIPASS``, un directorio temporal que NO esta
+# en el PATH, por lo que ctypes.windll falla al cargarlos. Anadir _MEIPASS al
+# PATH *antes* de importar webview soluciona el problema en Windows.
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    os.environ["PATH"] = str(sys._MEIPASS) + os.pathsep + os.environ.get("PATH", "")
 
 import uvicorn
 import webview

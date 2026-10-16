@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import threading
 import uuid
 from datetime import datetime
@@ -16,28 +17,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from utils import get_binary_path
+from utils import get_binary_path, resource_path
 
 
 # ============================================================
 # Rutas y configuración básica
 # ============================================================
 
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
-UPLOAD_DIR = BASE_DIR / "uploads"
-TEMP_DIR = BASE_DIR / "temp"
-CONFIG_FILE = BASE_DIR / "ytdlp_webgui_config.json"
-COOKIES_FILE = BASE_DIR / "cookies.txt"
+BASE_DIR = Path(sys._MEIPASS) if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS") else Path(__file__).resolve().parent
+RUNTIME_DIR = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent  # junto al .exe en builds one-file
+STATIC_DIR = Path(resource_path("static"))
+UPLOAD_DIR = RUNTIME_DIR / "uploads"
+TEMP_DIR = RUNTIME_DIR / "temp"
+CONFIG_FILE = RUNTIME_DIR / "ytdlp_webgui_config.json"
+COOKIES_FILE = RUNTIME_DIR / "cookies.txt"
 
 for directory in (STATIC_DIR, UPLOAD_DIR, TEMP_DIR):
-    directory.mkdir(exist_ok=True)
+    # parents=True: en builds one-file la carpeta junto al .exe puede no existir.
+    directory.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(BASE_DIR / "ytdlp_webgui.log", encoding="utf-8")
+        logging.FileHandler(RUNTIME_DIR / "ytdlp_webgui.log", encoding="utf-8")
     ],
 )
 logger = logging.getLogger("ytdlp-webgui")

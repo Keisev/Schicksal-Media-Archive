@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "ffmpeg version fake-6.0
+" 2>/dev/null; echo "ffmpeg version fake"
