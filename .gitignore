@@ -1,3 +1,10 @@
-build/
+__pycache__/
+*.pyc
+*.log
+cookies.txt
+ytdlp_webgui_config.json
+temp/
+uploads/
 dist/
+build/
 *.spec
