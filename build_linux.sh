@@ -302,14 +302,16 @@ echo " BUILD COMPLETO: $APPIMAGE_PATH"
 echo "=============================================="
 
 # ------------------------------------------------------------------------------
-# 7. Commit y push
+# 7. Commit y push (Solo en entorno local)
 # ------------------------------------------------------------------------------
 echo ""
-echo "[7/7] Commit y push del script..."
-
-git add build_linux.sh
-git commit -m "Add Linux AppImage build script" || echo "  (nada que commitear o commit existente)"
-git push origin main || echo "  ADVERTENCIA: no se pudo hacer push (¿sin remoto o sin credenciales?)"
-
+if [ "$GITHUB_ACTIONS" = "true" ]; then
+    echo "[7/7] Entorno CI detectado. Omitiendo commit y push automáticos."
+else
+    echo "[7/7] Commit y push del script..."
+    git add build_linux.sh
+    git commit -m "Add Linux AppImage build script" || echo "  (nada que commitear o commit existente)"
+    git push origin main || echo "  ADVERTENCIA: no se pudo hacer push (¿sin remoto o sin credenciales?)"
+fi
 echo ""
 echo "Listo."

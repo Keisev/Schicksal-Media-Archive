@@ -1,0 +1,84 @@
+name: Build and Release (Linux & Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'  # Se dispara SOLO cuando creas un tag que empieza con 'v' (ej. v1.0.1)
+
+permissions:
+  contents: write  # Permiso para subir archivos al Release
+
+jobs:
+  # =========================================================
+  # JOB 1: COMPILAR PARA LINUX (APPIMAGE)
+  # =========================================================
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'  # 3.11 es el estándar más estable para PyInstaller/PyQt6 en CI
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          # libfuse2 es OBLIGATORIO para que appimagetool funcione en los servidores de GitHub
+          sudo apt-get install -y libfuse2 file
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-linux.txt
+          pip install pyinstaller pywebview Pillow
+
+      - name: Run Linux Build Script
+        run: |
+          chmod +x build_linux.sh
+          ./build_linux.sh
+        env:
+          GITHUB_ACTIONS: 'true'  # Variable para que el script sepa que está en la nube
+
+      - name: Upload Linux Artifact to Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/*.AppImage
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # =========================================================
+  # JOB 2: COMPILAR PARA WINDOWS (.EXE)
+  # =========================================================
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # Dependencias típicas de Windows para PyQt6 y WebEngine
+          pip install pyinstaller pywebview PyQt6 PyQt6-WebEngine Pillow
+
+      - name: Run Windows Build Script
+        run: |
+          powershell.exe -ExecutionPolicy Bypass -File .\build_windows.ps1
+        env:
+          GITHUB_ACTIONS: 'true'
+
+      - name: Upload Windows Artifact to Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/*.exe
+          token: ${{ secrets.GITHUB_TOKEN }}
