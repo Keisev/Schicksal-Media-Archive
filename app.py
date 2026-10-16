@@ -19,33 +19,63 @@ from pydantic import BaseModel
 
 from utils import get_binary_path, resource_path
 
-
 # ============================================================
-# Rutas y configuración básica
+# Rutas y configuración básica (Compatible con PyInstaller/AppImage)
 # ============================================================
 
-BASE_DIR = Path(sys._MEIPASS) if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS") else Path(__file__).resolve().parent
-RUNTIME_DIR = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent  # junto al .exe en builds one-file
-STATIC_DIR = Path(resource_path("static"))
-UPLOAD_DIR = RUNTIME_DIR / "uploads"
-TEMP_DIR = RUNTIME_DIR / "temp"
-CONFIG_FILE = RUNTIME_DIR / "ytdlp_webgui_config.json"
-COOKIES_FILE = RUNTIME_DIR / "cookies.txt"
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    # Entorno empaquetado (AppImage / .exe)
+    BUNDLE_DIR = Path(sys._MEIPASS)
+    
+    # Carpeta de datos de usuario (escritura)
+    if os.name == 'nt':
+        DATA_DIR = Path(os.getenv('APPDATA', Path.home() / "AppData" / "Roaming")) / "SchicksalMediaArchive"
+    else:
+        DATA_DIR = Path.home() / ".local" / "share" / "SchicksalMediaArchive"
+        
+    # Rutas absolutas a los binarios empaquetados
+    YTDLP_BIN = str(BUNDLE_DIR / "yt-dlp")
+    FFMPEG_BIN = str(BUNDLE_DIR / "ffmpeg")
+    FFPROBE_BIN = str(BUNDLE_DIR / "ffprobe")
+else:
+    # Entorno de desarrollo (python app.py)
+    BUNDLE_DIR = Path(__file__).resolve().parent
+    DATA_DIR = BUNDLE_DIR
+    
+    # En desarrollo usamos los binarios del PATH del sistema
+    YTDLP_BIN = "yt-dlp"
+    FFMPEG_BIN = "ffmpeg"
+    FFPROBE_BIN = "ffprobe"
 
-for directory in (STATIC_DIR, UPLOAD_DIR, TEMP_DIR):
-    # parents=True: en builds one-file la carpeta junto al .exe puede no existir.
+STATIC_DIR = BUNDLE_DIR / "static"
+UPLOAD_DIR = DATA_DIR / "uploads"
+TEMP_DIR = DATA_DIR / "temp"
+CONFIG_FILE = DATA_DIR / "ytdlp_webgui_config.json"
+COOKIES_FILE = DATA_DIR / "cookies.txt"
+LOG_FILE = DATA_DIR / "ytdlp_webgui.log"
+
+for directory in (DATA_DIR, UPLOAD_DIR, TEMP_DIR):
     directory.mkdir(parents=True, exist_ok=True)
 
+# ============================================================
+# Configuración de logging (archivo en carpeta de datos + consola)
+# ============================================================
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(RUNTIME_DIR / "ytdlp_webgui.log", encoding="utf-8")
+        logging.FileHandler(LOG_FILE, encoding="utf-8"),
+        logging.StreamHandler(),
     ],
 )
 logger = logging.getLogger("ytdlp-webgui")
 
-app = FastAPI(title="YT-DLP Web GUI")
+
+# ============================================================
+# Estado global
+# ============================================================
+
+app = FastAPI(title="Schicksal Media Archive")
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,10 +84,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# ============================================================
-# Estado global
-# ============================================================
 
 class AppState:
     def __init__(self):
