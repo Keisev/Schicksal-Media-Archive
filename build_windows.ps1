@@ -28,7 +28,7 @@ if ($IsCI) { Write-Host "==> Entorno CI detectado (GitHub Actions)" -ForegroundC
 # 0. Localizar Python (py -> python -> python3)
 # -----------------------------------------------------------------------------
 $Python = $null
-foreach ($cand in @("py", "python", "python3")) {
+foreach ($cand in @("python", "python3", "py")) {
     if (Get-Command $cand -ErrorAction SilentlyContinue) {
         try {
             & $cand --version *> $null
@@ -48,14 +48,30 @@ Write-Host ""
 Write-Host "[1/5] Instalando dependencias Python..." -ForegroundColor Cyan
 
 foreach ($pkg in @("pyinstaller", "pywebview", "Pillow")) {
+    # "pip show" escribe WARNINGs por stderr si el paquete no existe.
+    # Con ErrorActionPreference=Stop, PowerShell 5.1 convierte ese stderr
+    # en error FATAL (NativeCommandError). Bajamos la preferencia solo
+    # durante la comprobacion y la restauramos despues.
+    $ErrorActionPreference = "Continue"
     & $Python -m pip show $pkg *> $null
-    if ($LASTEXITCODE -ne 0) {
+    $installed = ($LASTEXITCODE -eq 0)
+    $ErrorActionPreference = "Stop"
+
+    if (-not $installed) {
         Write-Host "    Instalando $pkg..." -ForegroundColor Yellow
-        & $Python -m pip install --upgrade $pkg | Out-Null
+        & $Python -m pip install --upgrade $pkg
+        if ($LASTEXITCODE -ne 0) { throw "Fallo la instalacion de '$pkg' via pip." }
+    } else {
+        Write-Host "    $pkg ya esta instalado." -ForegroundColor Green
     }
 }
 
+$ErrorActionPreference = "Continue"
 & $Python -m pip install -r requirements.txt | Out-Null
+$reqOk = ($LASTEXITCODE -eq 0)
+$ErrorActionPreference = "Stop"
+if (-not $reqOk) { throw "Fallo la instalacion de requirements.txt" }
+
 Write-Host "    Dependencias listas." -ForegroundColor Green
 
 # -----------------------------------------------------------------------------
@@ -145,6 +161,7 @@ Write-Host "[4/5] Ejecutando PyInstaller (--onefile --noconsole)..." -Foreground
 Remove-Item -Recurse -Force "build\$AppName" -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force "dist\$AppName*" -ErrorAction SilentlyContinue
 
+$ErrorActionPreference = "Continue"
 & $Python -m PyInstaller `
     --noconfirm `
     --clean `
@@ -157,8 +174,10 @@ Remove-Item -Recurse -Force "dist\$AppName*" -ErrorAction SilentlyContinue
     --add-data "static;static" `
     --collect-all "webview" `
     main.py
+$pyiOk = ($LASTEXITCODE -eq 0)
+$ErrorActionPreference = "Stop"
 
-if ($LASTEXITCODE -ne 0) { throw "PyInstaller finalizó con errores." }
+if (-not $pyiOk) { throw "PyInstaller finalizó con errores." }
 
 # -----------------------------------------------------------------------------
 # 5. Verificación final
